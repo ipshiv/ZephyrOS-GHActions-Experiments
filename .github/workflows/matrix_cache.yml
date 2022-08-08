@@ -40,7 +40,7 @@ jobs:
             build-
   build:
     runs-on: ubuntu-latest
-    container: zephyrprojectrtos/ci:v0.24.0
+    container: zephyrprojectrtos/ci:v0.23.4
     needs: [ config, init ]
     strategy:
         matrix:
@@ -54,9 +54,9 @@ jobs:
           key: build-${{ github.sha }}-${{needs.config.outputs.ver}}
       - run: |
           ls
-          pip install west
-          pip install -r zephyr/scripts/requirements-base.txt
-          pip install ecdsa
+          pip install -U west
+          pip install -U -r zephyr/scripts/requirements-base.txt
+          pip install -U ecdsa
       - name: Build sample
         working-directory: app
         run: |
