@@ -23,6 +23,7 @@ jobs:
     steps:
       - name: Initialize
         run: |
+          pip install --upgrade pip
           pip3 install west
           echo ${{needs.config.outputs.ver}}
           mkdir app && cd app
@@ -54,6 +55,7 @@ jobs:
           key: build-${{ github.sha }}-${{needs.config.outputs.ver}}
       - run: |
           ls
+          pip install --upgrade pip
           pip install -U west
           pip install -U -r zephyr/scripts/requirements-base.txt
           pip install -U ecdsa
