@@ -23,7 +23,6 @@ jobs:
     steps:
       - name: Initialize
         run: |
-          sudo apt install zstd
           pip3 install west
           echo ${{needs.config.outputs.ver}}
           mkdir app && cd app
@@ -76,7 +75,8 @@ jobs:
           key: buildfw-${{ github.sha }}-${{ matrix.board-name }}
           restore-keys: |
             buildfw-${{ github.sha }}
-      - run: |
+      - name: Status 
+        run: |
           FILESIZE=$(wc -c < nrf/samples/bluetooth/mesh/chat/build/zephyr/zephyr.bin)
           curl \
           -X POST \
