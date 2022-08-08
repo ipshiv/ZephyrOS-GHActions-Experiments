@@ -37,8 +37,7 @@ jobs:
           key: build-${{ github.sha }}-${{needs.config.outputs.ver}}
           restore-keys: |
             build-${{ github.sha }}-${{needs.config.outputs.ver}}
-            build-${{ github.sha }}-
-            build-
+            
   build:
     runs-on: ubuntu-latest
     container: zephyrprojectrtos/ci:v0.23.4
