@@ -69,8 +69,6 @@ jobs:
       - name: Build sample
         working-directory: app
         run: |
-            export ZEPHYR_TOOLCHAIN_VARIANT=gnuarmemb
-            ls
             cd nrf/samples/bluetooth/mesh/chat
             west build -b ${{ matrix.board-name }}
       - name: Cache build
