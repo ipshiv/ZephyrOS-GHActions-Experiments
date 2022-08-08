@@ -46,8 +46,6 @@ jobs:
         matrix:
           board-name: [nrf52840dk_nrf52840, nrf52dk_nrf52832]
     steps:
-      - run: |
-          sudo apt install zstd
       - name: Boot up
         uses: actions/cache@v2
         id: cache-firmware
