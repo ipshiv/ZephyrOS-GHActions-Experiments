@@ -16,14 +16,14 @@ jobs:
       - name: Set ver
         id: set_version
         run: |
-          echo ::set-output name=ver::"v1.8.0"
+          echo ::set-output name=ver::"v2.0.2"
   init:
     runs-on: ubuntu-latest
     needs: [ config ]
     steps:
       - name: Initialize
         run: |
-          pip install --upgrade pip
+          pip3 install --upgrade pip
           pip3 install west
           echo ${{needs.config.outputs.ver}}
           mkdir app && cd app
@@ -40,7 +40,11 @@ jobs:
             
   build:
     runs-on: ubuntu-latest
-    container: zephyrprojectrtos/ci:v0.23.4
+    container: ghcr.io/zephyrproject-rtos/ci:v0.23.3
+    env:
+      ZEPHYR_SDK_INSTALL_DIR: /opt/toolchains/zephyr-sdk-0.14.2
+      CLANG_ROOT_DIR: /usr/lib/llvm-12
+      ZEPHYR_TOOLCHAIN_VARIANT: zephyr
     needs: [ config, init ]
     strategy:
         matrix:
@@ -59,13 +63,17 @@ jobs:
           path: app
           key: build-${{ github.sha }}-${{needs.config.outputs.ver}}
       - name: Config
-        working-directory: app
         run: |  
-          ls
+          cd app
           pip install --upgrade pip
           pip install -U west
-          pip install -U -r zephyr/scripts/requirements-base.txt
+          west init -m https://github.com/nrfconnect/sdk-nrf --mr ${{needs.config.outputs.ver}}
+          west update
+          pip3 install --user -r zephyr/scripts/requirements.txt
+          pip3 install --user -r nrf/scripts/requirements.txt
+          pip3 install --user -r bootloader/mcuboot/scripts/requirements.txt
           pip install -U ecdsa
+          west zephyr-export
       - name: Build sample
         working-directory: app
         run: |
