@@ -56,7 +56,7 @@ jobs:
         working-directory: app
         run: |
           sudo apt update
-          sudo apt install curl
+          sudo apt-get -y install curl libcurl4
           ls
           FILESIZE=$(wc -c < nrf/samples/bluetooth/mesh/chat/build/zephyr/zephyr.bin)
           curl \
