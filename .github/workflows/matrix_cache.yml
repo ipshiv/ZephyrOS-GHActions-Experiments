@@ -67,15 +67,6 @@ jobs:
           cd app
           pip install --upgrade pip
           pip install -U west
-          git config --global --add safe.directory bootloader
-          git config --global --add safe.directory mbedtls
-          git config --global --add safe.directory modules
-          git config --global --add safe.directory nrf
-          git config --global --add safe.directory nrfxlib
-          git config --global --add safe.directory test
-          git config --global --add safe.directory tools
-          git config --global --add safe.directory zephyr
-          west update
           pip3 install --user -r zephyr/scripts/requirements.txt
           pip3 install --user -r nrf/scripts/requirements.txt
           pip3 install --user -r bootloader/mcuboot/scripts/requirements.txt
