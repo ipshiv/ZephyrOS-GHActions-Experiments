@@ -55,6 +55,8 @@ jobs:
       - name: Status 
         working-directory: app
         run: |
+          sudo apt update
+          sudo apt install curl
           ls
           FILESIZE=$(wc -c < nrf/samples/bluetooth/mesh/chat/build/zephyr/zephyr.bin)
           curl \
