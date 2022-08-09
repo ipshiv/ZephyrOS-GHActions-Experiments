@@ -1,0 +1,77 @@
+name: Test cache
+
+on:
+  pull_request:
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  config:
+    runs-on: ubuntu-latest
+    outputs:
+      ver: ${{ steps.set_version.outputs.ver }}
+    steps:
+      - name: Set ver
+        id: set_version
+        run: |
+          echo ::set-output name=ver::"v2.0.2"
+  
+  build:
+    runs-on: ubuntu-latest
+    container: ghcr.io/zephyrproject-rtos/ci:v0.23.3
+    env:
+      ZEPHYR_SDK_INSTALL_DIR: /opt/toolchains/zephyr-sdk-0.14.2
+      CLANG_ROOT_DIR: /usr/lib/llvm-12
+      ZEPHYR_TOOLCHAIN_VARIANT: zephyr
+    needs: [ config ]
+    strategy:
+        matrix:
+          board-name: [nrf52840dk_nrf52840, nrf52dk_nrf52832]
+    steps:
+      - run: |
+          mkdir app && cd app
+          west init -m https://github.com/nrfconnect/sdk-nrf --mr ${{needs.config.outputs.ver}}
+          west update
+          pip3 install --user -r zephyr/scripts/requirements.txt
+          pip3 install --user -r nrf/scripts/requirements.txt
+          pip3 install --user -r bootloader/mcuboot/scripts/requirements.txt
+          pip3 install ecdsa
+      - name: Build sample
+        id: build
+        working-directory: app
+        run: |
+            ls
+            cd nrf/samples/bluetooth/mesh/chat
+            west build -b ${{ matrix.board-name }}
+            FILESIZE=$(wc -c < build/zephyr/zephyr.bin)
+            echo $FILESIZE
+            echo ::set-output name=filesize::$filesize
+      - name: Cache build
+        uses: actions/cache@v2
+        id: cache-build
+        with:
+          path: nrf/samples/bluetooth/mesh/chat/build
+          key: buildfw-${{ github.sha }}-${{ matrix.board-name }}
+          restore-keys: |
+            buildfw-${{ github.sha }}
+      - name: Run the action # You would run your tests before this using the output to set state/desc
+        uses: Sibz/github-status-action@v1
+        with: 
+          authToken: ${{secrets.GITHUB_TOKEN}}
+          context: 'board/${{ matrix.board-name }}'
+          description: 'Build success >> ${{ steps.build.outputs.filesize }}'
+          state: 'success'
+          sha: ${{github.event.pull_request.head.sha || github.sha}}
+  store:
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - name: Restore build
+        uses: actions/cache@v2
+        id: cache-build
+        with:
+          path: builds
+          key: buildfw-${{ github.sha }}
+          
