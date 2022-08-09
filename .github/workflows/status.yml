@@ -61,7 +61,7 @@ jobs:
         with: 
           authToken: ${{secrets.GITHUB_TOKEN}}
           context: ':rocket: frimware/tool'
-          description: 'Build success ${{ matrix.board-name }} >> ${{ filesize }}'
+          description: 'Build success ${{ matrix.board-name }} >> $filesize'
           state: 'success'
           sha: ${{github.event.pull_request.head.sha || github.sha}}
   store:
