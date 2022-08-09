@@ -53,7 +53,9 @@ jobs:
           restore-keys: |
             buildfw-${{ github.sha }}
       - name: Status 
+        working-directory: app
         run: |
+          ls
           FILESIZE=$(wc -c < nrf/samples/bluetooth/mesh/chat/build/zephyr/zephyr.bin)
           curl \
           -X POST \
