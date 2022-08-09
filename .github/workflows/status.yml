@@ -60,8 +60,8 @@ jobs:
         uses: Sibz/github-status-action@v1
         with: 
           authToken: ${{secrets.GITHUB_TOKEN}}
-          context: ':rocket: frimware/tool'
-          description: 'Build success ${{ matrix.board-name }} >> $filesize'
+          context: 'board/${{ matrix.board-name }}'
+          description: 'Build success >> ${{ steps.build.outputs.filesize }}'
           state: 'success'
           sha: ${{github.event.pull_request.head.sha || github.sha}}
   store:
