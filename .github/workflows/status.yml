@@ -39,11 +39,15 @@ jobs:
           pip3 install --user -r bootloader/mcuboot/scripts/requirements.txt
           pip3 install ecdsa
       - name: Build sample
+        id: build
         working-directory: app
         run: |
             ls
             cd nrf/samples/bluetooth/mesh/chat
             west build -b ${{ matrix.board-name }}
+            FILESIZE=$(wc -c < build/zephyr/zephyr.bin)
+            echo $FILESIZE
+            echo ::set-output name=filesize::$filesize
       - name: Cache build
         uses: actions/cache@v2
         id: cache-build
@@ -56,8 +60,8 @@ jobs:
         uses: Sibz/github-status-action@v1
         with: 
           authToken: ${{secrets.GITHUB_TOKEN}}
-          context: 'Build success ${{ matrix.board-name }}'
-          description: 'frimware/tool'
+          context: ':rocket: frimware/tool'
+          description: 'Build success ${{ matrix.board-name }} >> ${{ build.filesize }}'
           state: 'success'
           sha: ${{github.event.pull_request.head.sha || github.sha}}
   store:
