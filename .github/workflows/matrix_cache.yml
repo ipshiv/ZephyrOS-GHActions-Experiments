@@ -16,56 +16,65 @@ jobs:
       - name: Set ver
         id: set_version
         run: |
-          echo ::set-output name=ver::"v1.8.0"
+          echo ::set-output name=ver::"v2.0.2"
   init:
     runs-on: ubuntu-latest
     needs: [ config ]
     steps:
       - name: Initialize
         run: |
-          sudo apt install zstd
+          pip3 install --upgrade pip
           pip3 install west
           echo ${{needs.config.outputs.ver}}
           mkdir app && cd app
           west init -m https://github.com/nrfconnect/sdk-nrf --mr ${{needs.config.outputs.ver}}
           west update
       - name: Cache
-        uses: actions/cache@v2
+        uses: actions/cache@v3
         id: cache-firmware
         with:
           path: app
           key: build-${{ github.sha }}-${{needs.config.outputs.ver}}
           restore-keys: |
             build-${{ github.sha }}-${{needs.config.outputs.ver}}
-            build-${{ github.sha }}-
-            build-
+            
   build:
     runs-on: ubuntu-latest
-    container: zephyrprojectrtos/ci:latest
+    container: ghcr.io/zephyrproject-rtos/ci:v0.23.3
+    env:
+      ZEPHYR_SDK_INSTALL_DIR: /opt/toolchains/zephyr-sdk-0.14.2
+      CLANG_ROOT_DIR: /usr/lib/llvm-12
+      ZEPHYR_TOOLCHAIN_VARIANT: zephyr
     needs: [ config, init ]
     strategy:
         matrix:
           board-name: [nrf52840dk_nrf52840, nrf52dk_nrf52832]
     steps:
       - run: |
-          sudo apt install zstd
+          wget https://github.com/facebook/zstd/archive/dev.zip
+          unzip dev.zip
+          cd zstd-dev
+          make install
+          zstd --version
       - name: Boot up
-        uses: actions/cache@v2
+        uses: actions/cache@v3
         id: cache-firmware
         with:
           path: app
           key: build-${{ github.sha }}-${{needs.config.outputs.ver}}
-      - run: |
-          ls
+      - name: Config
+        run: |  
           cd app
-          pip3 install west
-          pip3 install -r zephyr/scripts/requirements-base.txt
-          pip3 install ecdsa
+          pip install --upgrade pip
+          pip install -U west
+          pip3 install --user -r zephyr/scripts/requirements.txt
+          pip3 install --user -r nrf/scripts/requirements.txt
+          pip3 install --user -r bootloader/mcuboot/scripts/requirements.txt
+          pip install -U ecdsa
+          west zephyr-export
       - name: Build sample
         working-directory: app
         run: |
-            export ZEPHYR_TOOLCHAIN_VARIANT=gnuarmemb
-            ls
             cd nrf/samples/bluetooth/mesh/chat
             west build -b ${{ matrix.board-name }}
       - name: Cache build
@@ -76,6 +85,17 @@ jobs:
           key: buildfw-${{ github.sha }}-${{ matrix.board-name }}
           restore-keys: |
             buildfw-${{ github.sha }}
+      - name: Status 
+        run: |
+          FILESIZE=$(wc -c < nrf/samples/bluetooth/mesh/chat/build/zephyr/zephyr.bin)
+          curl \
+          -X POST \
+          -H "Accept: application/vnd.github+json" \ 
+          -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
+          https://api.github.com/repos/${{ github.repository }}/statuses/${{ github.sha }} \
+          -d '{"state":"success","target_url":"https://example.com/build/status","description":"Firmware >> $FILESIZE","context":"robot/${{ matrix.board-name }}"}'
+          
+        
   store:
     runs-on: ubuntu-latest
     needs: build
